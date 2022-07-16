@@ -57,7 +57,6 @@ def show_img(img, mask,fn):
     plt.show()
 
 
-
 class DatasetPredict(Dataset):
     def __init__(self, img_folder,  transform = None): # 'Initialization'
 
@@ -71,12 +70,18 @@ class DatasetPredict(Dataset):
 
         images_list = os.listdir(self.img_folder)
         images_name = images_list[index]
-
-        images = cv2.imread(self.img_folder +  images_name, 0) # grey 
+        # print(images_name) #5e6dd879fde9502400e58b2f.jpeg
+        # print(self.img_folder) #/home/trucloan/LoanDao/COVID_QU_Ex-main/COVIDx/EDA_Train/Positive50/
+        images = cv2.imread(self.img_folder +  images_name,0) # grey 
+        # print(type(images)) #<class 'numpy.ndarray'>
+        # print(images)
 
         images = np.array(images, dtype=np.float32) # đoi qua numpy array kiểu float 32
+        # print(images)
+        # print(images.shape)
 
-        image = cv2.GaussianBlur(image, (3,3), cv2.BORDER_DEFAULT)    
+        images = cv2.GaussianBlur(images, (3,3), cv2.BORDER_DEFAULT)    
+        images = np.expand_dims(images,0).transpose(1,2,0)#### (256, 256, 1) 
 
         if self.transform != None:
             aug = self.transform(image = images)            

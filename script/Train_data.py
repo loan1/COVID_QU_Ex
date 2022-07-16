@@ -2,7 +2,6 @@ import albumentations  as A
 from albumentations.pytorch.transforms import ToTensorV2
 import numpy as np
 
-
 augs = A.Compose([
         A.Resize(256, 256), 
         A.HorizontalFlip(p=0.5),
@@ -24,8 +23,8 @@ transfms = A.Compose([
 def img_de_normalize (img, mask):
         
     img = np.squeeze(img)
-    img = img*0.3 + 0.59
-    mask = mask*0.3+0.59
+    img = img*0.2220 + 0.5128
+    mask = mask*0.220+0.5128
     img= np.clip(img, 0, 1)
     mask = np.clip(mask, 0,1)
     

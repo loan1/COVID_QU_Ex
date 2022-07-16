@@ -1,7 +1,7 @@
-# link dataset https://www.kaggle.com/andyczhao/covidx-cxr2/code
+# link dataset https://www.kaggle.com/datasets/andyczhao/covidx-cxr2
 # import module
 from script.custom_dataset import DatasetPredict
-
+from script.Train_data import transfms
 #import lib
 import cv2
 from skimage import morphology
@@ -15,10 +15,9 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-def dataloaderPre(batch_size, transfms): # data 14gb
+def dataloaderPre(batch_size, transfms): # data COVIDx
 
-    data_dir = '/media/trucloan/Data/Research/BT_Phu/covid-chestxray-dataset-master/lung/dataset_lungseg/predict/'
-
+    data_dir = '/home/trucloan/LoanDao/COVID_QU_Ex-main/COVIDx/EDA_Train/'
     dataNegative = DatasetPredict(data_dir + 'Negative/', transform = transfms)
     dataPositive = DatasetPredict(data_dir + 'Positive/', transform = transfms)
 
@@ -34,11 +33,11 @@ def dataloaderPre(batch_size, transfms): # data 14gb
             shuffle=False
         )
     }   
-    # print(len(loader['test']))
+    
     return loader
 
 
-def predict(dataloader, model, device): # dataset 14gb
+def predict(dataloader, model, device): # dataset COVIDx
     model.eval()
     with torch.no_grad():
         image, y_predict = [], []
@@ -106,15 +105,17 @@ def predict(dataloader, model, device): # dataset 14gb
 #     np.save('../../visualize/InferVGG11_bn_PosFULL/y_predict_5folds.npy',y)
 #     np.save('../../visualize/InferVGG11_bn_PosFULL/y_predict_mean_5folds.npy',y_mean)
 
-#     # plt.show()
+    # plt.show()
 def postprocess(img):
     # img = cv2.imread(img_name, 0)
+    # print(img.shape) # (256, 256)
+    
     areas = []
     img = img.astype("uint8")
     blur = cv2.GaussianBlur(img, (3,3), 0) #làm mờ ảnh
     _, thresh = cv2.threshold(blur, 0,1, cv2.THRESH_BINARY + cv2.THRESH_OTSU) #nhị phân hóa ảnh
 
-    contours, hierarchy = cv2.findContours(thresh.copy(),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #tính contours
+    _,contours, _ = cv2.findContours(thresh.copy(),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE) #tính contours
 
     for i in range(len(contours)):
         areas.append(cv2.contourArea(contours[i]))
@@ -128,24 +129,31 @@ def postprocess(img):
     
     return thresh
 
+# def preprocessing(img):
+    
+
 
 if __name__ == '__main__':
+    dl = dataloaderPre(batch_size=4, transfms=transfms)
+    po = dl['Positive']
+    img, lb = next(iter(po))
+    print(img.shape)
 
-    # mainPredict()
-    ############################################################################
+    # # mainPredict()
+    # ###########################################################################
     # data_dir = '../../dataset_lungseg/predict/'
     # img_folder = data_dir + 'Negative50/'
 
     # # print(len(os.listdir(img_folder))) # = 50
 
     # images_names = os.listdir(img_folder) # = list 50 tên ảnh
-    # # print('images_names: ', images_names)
-    # images = Image.open(img_folder +  images_names[20]).convert('L')
-    # # print('images: ', images)
-    # images = np.array(images, dtype=np.float32)
-    # print('images: ', images.shape)
+    # print('images_names: ', images_names)
+    # # images = Image.open(img_folder +  images_names[20]).convert('L')
+    # # # print('images: ', images)
+    # # images = np.array(images, dtype=np.float32)
+    # # print('images: ', images.shape)
     # img, name = next(iter(dataloaderPre()['Positive']))
-    # # print(name)
+    # print(name)
     # for i in range(4):
     #     plt.imshow(img[i][0], cmap='gray')
     #     plt.title(name[i])
@@ -156,45 +164,45 @@ if __name__ == '__main__':
     #     plt.show()
 
 
-    #######################################################################################################
-    ###################################
-    ### TAO FILE TXT LUU TEN ANH #####
-    ##################################
-    list_name =[]
-    for img,name in tqdm(dataloaderPre()['Positive']):
-        list_name.append(name)
-    # print(len(list_name)) # 4123
-    # print(list_name)
+    # #######################################################################################################
+    # ###################################
+    # ### TAO FILE TXT LUU TEN ANH #####
+    # ##################################
+    # list_name =[]
+    # for img, name in tqdm(dataloaderPre()['Positive']):
+    #     list_name.append(name)
+    # # print(len(list_name)) # 4123
+    # # print(list_name)
 
-    res = []
-    for i in tqdm(range(len(list_name)-1)):
-        for idx in range(4):
-            res.append(list_name[i][idx])
+    # res = []
+    # for i in tqdm(range(len(list_name)-1)):
+    #     for idx in range(4):
+    #         res.append(list_name[i][idx])
     
-    for i in range(2): #xu li phan le trong batch cuoi
-        res.append(list_name[len(list_name)-1][i])
+    # for i in range(2): #xu li phan le trong batch cuoi
+    #     res.append(list_name[len(list_name)-1][i])
 
-    # print(res)
+    # # print(res)
 
-    np.savetxt('../../dataset_lungseg/predict/filenamePos.txt', res, fmt = '%s')
-    ########################################################################################################
+    # np.savetxt('../../dataset_lungseg/predict/filenamePos.txt', res, fmt = '%s')
+    # # ########################################################################################################
 
-          # print(y_mean.shape) # y_mean = 4123 x 4 x 256 x 256
+    # #       # print(y_mean.shape) # y_mean = 4123 x 4 x 256 x 256
     
-    # ######################################################################################
+    # # # ######################################################################################
 
-    images_np = np.load('../../visualize/InferVGG11_bn_PosFULL/images.npy', allow_pickle=True)
-    y = np.load('../../visualize/InferVGG11_bn_PosFULL/y_predict_5folds.npy', allow_pickle=True)
-    y_mean = np.load('../../visualize/InferVGG11_bn_PosFULL/y_predict_mean_5folds.npy', allow_pickle=True)
+    # images_np = np.load('../../visualize/InferVGG11_bn_PosFULL/images.npy', allow_pickle=True)
+    # y = np.load('../../visualize/InferVGG11_bn_PosFULL/y_predict_5folds.npy', allow_pickle=True)
+    # y_mean = np.load('../../visualize/InferVGG11_bn_PosFULL/y_predict_mean_5folds.npy', allow_pickle=True)
 
-    list_name = np.loadtxt('../../dataset_lungseg/predict/filenamePos.txt', dtype = list)
+    # list_name = np.loadtxt('../../dataset_lungseg/predict/filenamePos.txt', dtype = list)
 
-    for i in tqdm(range(len(dataloaderPre()['Positive']))):   # 
-        for idx in range(4):
+    # for i in tqdm(range(len(dataloaderPre()['Positive']))):   # 
+    #     for idx in range(4):
 
-            ret = postprocess(y_mean[i][idx])           
-            plt.imsave('../../dataset_lungseg/predict/PosMaskVGG11/' + list_name[i*4+idx], ret)
+    #         ret = postprocess(y_mean[i][idx])           
+    #         plt.imsave('../../dataset_lungseg/predict/PosMaskVGG11/' + list_name[i*4+idx], ret)
 
     # imshow(images_np, y, y_mean, ret'../../visualizeTestResNet18/testResNet1803.png')
 
-    plt.close('all')
+    # plt.close('all')

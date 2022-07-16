@@ -1,3 +1,6 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
 # import module
 from script.custom_dataset import ImageDataset
 
@@ -6,6 +9,7 @@ from script.custom_dataset import ImageDataset
 import torch
 import numpy as np
 from sklearn.metrics import accuracy_score, jaccard_score, f1_score, recall_score, precision_score
+
 #loss
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,6 +27,10 @@ import albumentations  as A
 from albumentations.pytorch.transforms import ToTensorV2
 
 from tqdm import tqdm
+
+# for preprocessing
+import cv2
+import shutil
 
 class ComboLoss(nn.Module): #Dice + BCE + focal
     def __init__(self, weight=None, size_average=True):
@@ -96,7 +104,7 @@ def set_model(device, lr, model):
     return optimizer, scheduler, loss_fn
 
 def set_dataloader(batch_size, augs, transfms):
-    lung_data = './Lung Segmentation Data/Lung Segmentation Data/'
+    lung_data = './COVID_QU_Ex_dataset/Lung Segmentation Data/Lung Segmentation Data/'
 
     train_csv = pd.read_csv(lung_data+'train.csv') 
     train_dataset = ImageDataset(train_csv, lung_data + 'Train', augs)
@@ -155,3 +163,23 @@ transfms_M_STD = A.Compose([
 #     std1 /= nb_samples
 
 #     return mean1, std1
+
+
+
+# def filter(file_name, source_path, des_path):
+#     mask = cv2.imread(source_path + file_name,0)
+#     _, thresh = cv2.threshold(mask, 0,1, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+#     _,contours, _= cv2.findContours(thresh.copy(),cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+#     print("Number of Contours found = "+ str(len(contours)))
+
+#     #tinh dien tich vung phoi phan doan
+#     areas = []
+#     for i in range(len(contours)):
+#         areas.append(cv2.contourArea(contours[i]))
+#     print(areas)
+
+#     # loc anh
+#     if areas < (256*256)/2:
+#         shutil.copy(source_path + file_name, des_path)
+
+
